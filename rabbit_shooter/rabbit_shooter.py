@@ -17,6 +17,10 @@ bullets = []
 bullet_speed = 10
 #兔子的角度
 rabbit_angle=0.0
+# 定义了一个定时器，使得游戏里经过一段时间后就新建一支獾
+timer_badguys = 50
+badguys = [[640, 100]]
+healthvalue = 100
 
 
 #加载射手
@@ -77,6 +81,17 @@ while True:
         # 重新绘制子弹
         rabbit_bullet_changed = pygame.transform.rotate(rabbit_bullet, 360 - (bullet[0] / math.pi * 180))
         screen.blit(rabbit_bullet_changed, (bullet[1], bullet[2]))
+    #创建计时器，根据随机不定时长创建坏蛋
+    if timer_badguys == 0:
+        badguys.append([640, random.randint(50, 430)])
+        timer_badguys = random.randint(15, 35)
+    #初始化序列
+    index_badguys = 0
+    #屏幕上绘制坏蛋
+    for badguy in badguys:
+        #坏蛋随机向前移动
+        badguy[0] -= random.randint(3,9)
+        #
     #刷新显示的样子
     pygame.display.flip()
     #监听退出事件
@@ -129,3 +144,4 @@ while True:
     if key_press[3]:
         if rabbit_pos[0] <= 300:
             rabbit_pos[0] += 5
+    timer_badguys -= 1
