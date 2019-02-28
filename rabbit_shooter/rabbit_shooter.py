@@ -18,9 +18,9 @@ bullet_speed = 10
 #兔子的角度
 rabbit_angle=0.0
 # 定义了一个定时器，使得游戏里经过一段时间后就新建一支獾
-timer_badguys = 50
-badguys = [[640, 100]]
-healthvalue = 100
+timer_badguys = 100
+badguys = []
+healthvalue = 194
 
 
 #加载射手
@@ -36,12 +36,24 @@ bad_rabbit1 = pygame.image.load("resources/images/badguy1.png")
 bad_rabbit2 = pygame.image.load("resources/images/badguy2.png")
 bad_rabbit3 = pygame.image.load("resources/images/badguy3.png")
 bad_rabbit4 = pygame.image.load("resources/images/badguy4.png")
+youwin_img = pygame.image.load("resources/images/youwin.png")
+gameover_img = pygame.image.load("resources/images/gameover.png")
+bad_rabbit = bad_rabbit1
+#加载城堡健康值
+health_bar = pygame.image.load("resources/images/healthbar.png")
+health = pygame.image.load("resources/images/health.png")
 #射手兔位置
 rabbit_pos = [100, 100]
 #是否按着键
 key_press = [False, False, False, False]
+
+# 不停地循环执行接下来的部分
+# running变量会跟踪游戏是否结束
+running = True
+# exitcode变量会跟踪玩家是否胜利
+exitcode = False
 #代码主体
-while True:
+while running:
     #背景填充黑色
     screen.fill(0)
     # 添加草地
@@ -83,15 +95,60 @@ while True:
         screen.blit(rabbit_bullet_changed, (bullet[1], bullet[2]))
     #创建计时器，根据随机不定时长创建坏蛋
     if timer_badguys == 0:
-        badguys.append([640, random.randint(50, 430)])
-        timer_badguys = random.randint(15, 35)
+        type = random.randint(1, 4)
+        if type == 1:
+            bad_rabbit = bad_rabbit1
+        elif type == 2:
+            bad_rabbit = bad_rabbit2
+        elif type == 3:
+            bad_rabbit = bad_rabbit3
+        else:
+            bad_rabbit = bad_rabbit4
+        badguys.append([bad_rabbit, 640, random.randint(50, 430)])
+        timer_badguys = random.randint(40, 60)
     #初始化序列
     index_badguys = 0
     #屏幕上绘制坏蛋
     for badguy in badguys:
         #坏蛋随机向前移动
-        badguy[0] -= random.randint(3,9)
-        #
+        badguy[1] -= random.randint(1,7)
+        #获取相应的坏蛋实体
+        badrect = pygame.Rect(badguy[0].get_rect())
+        badrect.top = badguy[2]
+        badrect.left = badguy[1]
+        #判断是否进入兔子窝
+        if badrect.left < 64:
+            healthvalue -= 10
+            badguys.pop(index_badguys)
+        # 初始化序列
+        index_bullets = 0
+        #判断子弹是否击中
+        for bullet in bullets:
+            bulletrect = pygame.Rect(rabbit_bullet.get_rect())
+            bulletrect.top = bullet[2]
+            bulletrect.left = bullet[1]
+            if badrect.colliderect(bulletrect):
+                account[1] += 1
+                badguys.pop(index_badguys)
+                bullets.pop(index_bullets)
+            index_bullets += 1
+        index_badguys += 1
+    #随机添加不同的坏蛋
+    for badguy in badguys:
+        screen.blit(badguy[0], (badguy[1], badguy[2]))
+    # 添加一个计时
+    # 使用了PyGame默认的大小为24的字体来显示时间信息。
+    font = pygame.font.Font(None, 24)
+    survivedtext = font.render(str((90000 - pygame.time.get_ticks()) // 60000) + ":" +
+                                   str((90000 - pygame.time.get_ticks()) // 1000 % 60).zfill(2), True, (0, 0, 0))
+    textRect = survivedtext.get_rect()
+    textRect.topright = [635, 5]
+    screen.blit(survivedtext, textRect)
+    # 画出城堡健康值
+    # 首先画了一个全红色的生命值条。然后根据城堡的生命值往生命条里面添加绿色。
+    screen.blit(health_bar, (5, 5))
+    for health1 in range(healthvalue):
+        screen.blit(health, (health1 + 8, 8))
     #刷新显示的样子
     pygame.display.flip()
     #监听退出事件
@@ -145,3 +202,40 @@ while True:
         if rabbit_pos[0] <= 300:
             rabbit_pos[0] += 5
     timer_badguys -= 1
+    #判断
+    if pygame.time.get_ticks() >= 90000:
+        running = False
+        exitcode = True
+    if healthvalue <= 0:
+        running = False
+        exitcode = False
+    if account[1] != 0:
+        accuracy = (account[1]/account[0])*100
+        accuracy = ("%.2f" % accuracy)
+    else:
+        accuracy = 0
+
+if exitcode == False:
+    pygame.font.init()
+    font = pygame.font.Font(None, 24)
+    text = font.render("Accuracy: " + str(accuracy) + "%", True, (255, 0, 0))
+    textRect = text.get_rect()
+    textRect.centerx = screen.get_rect().centerx
+    textRect.centery = screen.get_rect().centery + 24
+    screen.blit(gameover_img, (0, 0))
+    screen.blit(text, textRect)
+else:
+    pygame.font.init()
+    font = pygame.font.Font(None, 24)
+    text = font.render("Accuracy: " + str(accuracy) + "%", True, (0, 255, 0))
+    textRect = text.get_rect()
+    textRect.centerx = screen.get_rect().centerx
+    textRect.centery = screen.get_rect().centery + 24
+    screen.blit(youwin_img, (0, 0))
+    screen.blit(text, textRect)
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            exit()
+    pygame.display.flip()
