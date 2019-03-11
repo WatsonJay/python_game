@@ -11,7 +11,7 @@ class Block(cocos.sprite.Sprite):
         self.image_anchor = 0,0
         x,y = position
         if x == 0:
-            self.scale_x = 4.5
+            self.scale_x = 5.5
             self.scale_y = 1
         else:
             self.scale_x = 0.5 + random.random() * 1.5

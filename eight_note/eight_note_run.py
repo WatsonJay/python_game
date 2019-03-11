@@ -16,6 +16,7 @@ class eight_note_game(cocos.layer.ColorLayer):
         # 初始化参数
         # frames_per_buffer
         self.numSamples = 1000
+        self.trip = 0
         #音量条
         self.vbar = Sprite("resources/black.png")
         self.vbar.position = 50, 450
@@ -44,15 +45,18 @@ class eight_note_game(cocos.layer.ColorLayer):
             frames_per_buffer=self.numSamples)
 
         #创建八分音符酱
-
+        self.eight_note = eight_note()
+        self.add(self.eight_note)
         #创建地板
-
+        self.floor = cocos.cocosnode.CocosNode()
+        self.add(self.floor)
+        position = 0, 100
+        for i in range(200):
+            b = Block(position)
+            self.floor.add(b)
+            position = b.x + b.width, b.height
         #游戏主循环
         self.schedule(self.loop)
-
-
-    # 碰撞检测
-    # def collide(self):
 
     #游戏循环定义
     def loop(self, dt):
@@ -60,11 +64,30 @@ class eight_note_game(cocos.layer.ColorLayer):
         audio_data = self.stream.read(self.numSamples)
         length = len(audio_data)
         k= max(struct.unpack('%dh' % (length//2), audio_data))
-        if k<0:
-            voice_level = 0
-        else:
-            voice_level = k
-        self.vbar.scale_x = voice_level / 10000.0
+        voice_level = min(max(k,0),300000)
+        #音量条显示音量
+        self.vbar.scale_x = voice_level / 100000.0
+        #移动音符酱
+        if voice_level > 3000:
+            self.floor.x -= min((voice_level / 20.0), 300) * dt
+        #音符酱跳跃
+        if voice_level > 6000:
+            self.eight_note.jump((voice_level-60000) / 1000.0)
+        #判断是否着陆
+        self.islanded()
+
+    # 碰撞检测
+    def islanded(self):
+        pass_x = self.eight_note.x - self.floor.x
+        for block in self.floor.get_children():
+            if block.x <= pass_x + self.eight_note.width*0.8 and pass_x + self.eight_note.width * 0.2 <= block.x + block.width:
+                if self.eight_note.y < block.height:
+                    self.eight_note.stay(block.height)
+                    break
+
+    # 重置
+    def reset(self):
+        self.floor.x = 0
 
 if __name__ == '__main__':
 	cocos.director.director.init(caption="八分音符酱~~")
