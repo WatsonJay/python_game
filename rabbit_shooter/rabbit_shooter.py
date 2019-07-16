@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #导入pygame库
 import pygame
 from pygame.locals import *
